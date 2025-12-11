@@ -4,7 +4,7 @@ import (
 	"errors"
 
 	"github.com/gofiber/fiber/v2"
-	apperrors "github.com/yourcompany/backend-core/pkg/errors"
+	apperrors "template/modules/core/pkg/errors"
 	"gorm.io/gorm"
 )
 

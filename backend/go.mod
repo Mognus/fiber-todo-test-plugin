@@ -1,11 +1,11 @@
-module github.com/yourcompany/todo-module
+module template/modules/todo
 
 go 1.23
 
 require (
 	github.com/gofiber/fiber/v2 v2.52.10
-	github.com/yourcompany/backend-core v0.0.0
 	gorm.io/gorm v1.31.1
+	template/modules/core v0.0.0
 )
 
 require (
@@ -25,5 +25,5 @@ require (
 	golang.org/x/text v0.20.0 // indirect
 )
 
-// For local development
-replace github.com/yourcompany/backend-core => ../backend-core
+// Local module replacement
+replace template/modules/core => ../../backend-core/backend
