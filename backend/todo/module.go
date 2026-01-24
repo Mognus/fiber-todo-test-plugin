@@ -1,10 +1,8 @@
 package todo
 
 import (
-	"errors"
-
 	"github.com/gofiber/fiber/v2"
-	apperrors "template/modules/core/pkg/errors"
+	"template/modules/core/pkg/crud"
 	"gorm.io/gorm"
 )
 
@@ -25,12 +23,14 @@ func (m *Module) Name() string {
 
 // RegisterRoutes registers all todo routes
 func (m *Module) RegisterRoutes(router fiber.Router) {
+	// CRUD routes for todos
 	todos := router.Group("/todos")
-	todos.Get("/", m.GetTodos)
-	todos.Get("/:id", m.GetTodo)
-	todos.Post("/", m.CreateTodo)
-	todos.Put("/:id", m.UpdateTodo)
-	todos.Delete("/:id", m.DeleteTodo)
+	todos.Get("/", m.ListHandler())
+	todos.Get("/schema", m.SchemaHandler())
+	todos.Get("/:id", m.GetHandler())
+	todos.Post("/", m.CreateHandler())
+	todos.Put("/:id", m.UpdateHandler())
+	todos.Delete("/:id", m.DeleteHandler())
 }
 
 // Migrate runs database migrations
@@ -38,118 +38,28 @@ func (m *Module) Migrate(db *gorm.DB) error {
 	return db.AutoMigrate(&Todo{})
 }
 
-// GetTodos - List all todos
-// GET /api/todos
-func (m *Module) GetTodos(c *fiber.Ctx) error {
-	var todos []Todo
+// Handler method implementations using default helpers
 
-	if err := m.db.Find(&todos).Error; err != nil {
-		appErr := apperrors.Internal(err)
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	return c.JSON(todos)
+func (m *Module) ListHandler() fiber.Handler {
+	return crud.DefaultListHandler(m)
 }
 
-// GetTodo - Get single todo
-// GET /api/todos/:id
-func (m *Module) GetTodo(c *fiber.Ctx) error {
-	id := c.Params("id")
-	var todo Todo
-
-	if err := m.db.First(&todo, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			appErr := apperrors.NotFound("Todo")
-			return c.Status(appErr.Code).JSON(appErr)
-		}
-		appErr := apperrors.Internal(err)
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	return c.JSON(todo)
+func (m *Module) SchemaHandler() fiber.Handler {
+	return crud.DefaultSchemaHandler(m)
 }
 
-// CreateTodo - Create new todo
-// POST /api/todos
-func (m *Module) CreateTodo(c *fiber.Ctx) error {
-	todo := new(Todo)
-
-	if err := c.BodyParser(todo); err != nil {
-		appErr := apperrors.BadRequest("Invalid request body")
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	// Validation
-	if todo.Title == "" {
-		appErr := apperrors.ValidationError(map[string]string{
-			"title": "Title is required",
-		})
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	if err := m.db.Create(&todo).Error; err != nil {
-		appErr := apperrors.Internal(err)
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	return c.Status(201).JSON(todo)
+func (m *Module) GetHandler() fiber.Handler {
+	return crud.DefaultGetHandler(m)
 }
 
-// UpdateTodo - Update existing todo
-// PUT /api/todos/:id
-func (m *Module) UpdateTodo(c *fiber.Ctx) error {
-	id := c.Params("id")
-	var todo Todo
-
-	// Find existing todo
-	if err := m.db.First(&todo, id).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			appErr := apperrors.NotFound("Todo")
-			return c.Status(appErr.Code).JSON(appErr)
-		}
-		appErr := apperrors.Internal(err)
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	// Parse update data
-	if err := c.BodyParser(&todo); err != nil {
-		appErr := apperrors.BadRequest("Invalid request body")
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	// Validation
-	if todo.Title == "" {
-		appErr := apperrors.ValidationError(map[string]string{
-			"title": "Title is required",
-		})
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	// Save updates
-	if err := m.db.Save(&todo).Error; err != nil {
-		appErr := apperrors.Internal(err)
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	return c.JSON(todo)
+func (m *Module) CreateHandler() fiber.Handler {
+	return crud.DefaultCreateHandler(m)
 }
 
-// DeleteTodo - Delete todo
-// DELETE /api/todos/:id
-func (m *Module) DeleteTodo(c *fiber.Ctx) error {
-	id := c.Params("id")
-	var todo Todo
+func (m *Module) UpdateHandler() fiber.Handler {
+	return crud.DefaultUpdateHandler(m)
+}
 
-	result := m.db.Delete(&todo, id)
-	if result.Error != nil {
-		appErr := apperrors.Internal(result.Error)
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	if result.RowsAffected == 0 {
-		appErr := apperrors.NotFound("Todo")
-		return c.Status(appErr.Code).JSON(appErr)
-	}
-
-	return c.Status(204).Send(nil)
+func (m *Module) DeleteHandler() fiber.Handler {
+	return crud.DefaultDeleteHandler(m)
 }
