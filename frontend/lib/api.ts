@@ -1,10 +1,12 @@
 import { fetcher, mutateFetch } from '@/lib/api/fetcher'
 import type { Todo, CreateTodoRequest } from '../types'
+import type { ListResponse } from '@/modules/admin-module/frontend/types'
 
 export const todoAPI = {
   // Get all todos
   getTodos: async (): Promise<Todo[]> => {
-    return fetcher<Todo[]>('/todos')
+    const data = await fetcher<ListResponse<Todo>>('/todos')
+    return data.items
   },
 
   // Create new todo
