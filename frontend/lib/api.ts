@@ -1,21 +1,19 @@
-import { api } from '@/lib/api'
+import { fetcher, mutateFetch } from '@/lib/api/fetcher'
 import type { Todo, CreateTodoRequest } from '../types'
 
 export const todoAPI = {
   // Get all todos
   getTodos: async (): Promise<Todo[]> => {
-    const response = await api.get('/todos')
-    return response.data
+    return fetcher<Todo[]>('/todos')
   },
 
   // Create new todo
   createTodo: async (data: CreateTodoRequest): Promise<Todo> => {
-    const response = await api.post('/todos', data)
-    return response.data
+    return mutateFetch<Todo>('/todos', { method: 'POST', body: data })
   },
 
   // Delete todo
   deleteTodo: async (id: number): Promise<void> => {
-    await api.delete(`/todos/${id}`)
+    await mutateFetch<void>(`/todos/${id}`, { method: 'DELETE' })
   },
 }
